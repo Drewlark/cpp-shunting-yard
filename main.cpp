@@ -15,7 +15,7 @@ const std::unordered_map<std::string, int> opset = { //token, precedence pairs
 	{"/", 1}
 };
 
-const std::unordered_map<std::string, bool> opleftassoc = { //token, precedence pairs
+const std::unordered_map<std::string, bool> opleftassoc = { //token, left-association (true if operator is left associative) pairs
 	{"+", 0},
 	{"-", 1},
 	{"*", 0},
@@ -45,15 +45,15 @@ public:
 };
 
 
-class TokenQueue {
+class TokenQueue { //TokenQueue is an object used by the Shunting-Yard in this implementation that results in a more readable and faster Shunting-Yard
 	std::queue<ParseToken> data;
 public:
 	TokenQueue(std::string s) {
 		std::string temp = "";
 		for (char c : s) {
-			if (opset.count(std::string(1, c)) || c == ')' || c == '(') {
+			if (opset.count(std::string(1, c)) || c == ')' || c == '(') { //General check if c is an operator if so we want to clear our temp string, push it, then push the operator
 				if (temp.length() > 0) {
-					if (is_num(temp))
+					if (is_num(temp)) //Check if temp is numeric
 						data.push(ParseToken(temp, TokenType::num));
 					else
 						data.push(ParseToken(temp, TokenType::name));
@@ -97,10 +97,10 @@ public:
 	bool empty() { return data.empty(); }
 };
 
-std::queue<ParseToken> shunting_yard(TokenQueue tq)
+std::queue<ParseToken> shunting_yard(TokenQueue tq) //Actual Shunting-Yard algorithm. output is the output queue
 {
-	std::queue<ParseToken> out_q;
-	std::stack<ParseToken> op_stk;
+	std::queue<ParseToken> out_q; //output queue
+	std::stack<ParseToken> op_stk; //operator stack
 
 	while (!tq.empty()) {
 		ParseToken pt = tq.pop();
@@ -151,7 +151,7 @@ std::queue<ParseToken> shunting_yard(TokenQueue tq)
 	return out_q;
 }
 
-struct TokenNode {
+struct TokenNode { //Node for our ParseTree
 	ParseToken data;
 	std::vector<TokenNode*> branches;
 	TokenNode(ParseToken _data, std::vector<TokenNode*> _branches = {}) : data(_data), branches(_branches) {}
@@ -161,32 +161,32 @@ struct TokenNode {
 struct ParseTree {
 	TokenNode* root;
 
-	ParseTree(std::queue<ParseToken> tq) {
-		std::stack<TokenNode*> pds;
+	ParseTree(std::queue<ParseToken> tq) { //Turn a Shunting-Yard output queue into a tree of tokens. This is needed to actually evaluate the expression
+		std::stack<TokenNode*> pds; //any nodes not yet childed to an operator are pushed here
 		while (!tq.empty()) {
 			ParseToken pt = ParseToken(tq.front());
 			tq.pop();
-			if (pt.tt == TokenType::op) {
+			if (pt.tt == TokenType::op) { //When we find an operator we must pop n tokens off of pds. n=amount of operands required by given operator or function
 				std::vector<TokenNode*> temp;
 				for (int i = 0; i < 2; ++i) { //Temporary - solution must be implemented once functions are here. Loop length should depend on input requirement from function
 					temp.push_back(pds.top());
 					pds.pop();
 				}
-				std::reverse(std::begin(temp), std::end(temp));
-				pds.push(new TokenNode(pt, temp));
+				std::reverse(std::begin(temp), std::end(temp)); //vector must be reversed in order for the variables to be in the 'right' order
+				pds.push(new TokenNode(pt, temp)); //create and push operator node with operand children
 			}
 			else {
-				pds.push(new TokenNode(pt));
+				pds.push(new TokenNode(pt)); //if not an operator, push to pds
 			}
 		}
-		root = pds.top();
+		root = pds.top(); //remaining node is the root
 	}
 
 	~ParseTree() {
 		delete root;
 	}
 };
-
+//definitions for operator functions
 double add(std::vector<double> vec) { return vec[0] + vec[1]; }
 double sub(std::vector<double> vec) { return vec[0] - vec[1]; }
 double mult(std::vector<double> vec) { return vec[0] * vec[1]; }
@@ -201,6 +201,7 @@ std::unordered_map<std::string, opfunc > mathmap = {
 	{"/", div}
 };
 
+//Recursive function for evaluating our parse tree
 double eval_tree(const TokenNode* tn) {
 	if (tn->data.tt == TokenType::op) {
 		if (mathmap.count(tn->data.val)) {
@@ -215,6 +216,7 @@ double eval_tree(const TokenNode* tn) {
 		return atol(tn->data.val.c_str());
 	}
 }
+
 
 int main()
 {
