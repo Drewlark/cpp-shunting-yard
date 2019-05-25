@@ -22,7 +22,7 @@ const std::unordered_map<std::string, bool> opleftassoc = { //token, precedence 
 	{"/", 1}
 };
 
-bool is_num(const std::string& s) //https://stackoverflow.com/a/4654718/10392838
+bool is_num(const std::string& s)
 {
 	for (char c : s) {if (!isdigit(c)) return false;}
 }
@@ -213,16 +213,19 @@ double eval_tree(const TokenNode *tn) {
 
 int main() 
 {
-	std::string s = "((3*2)+(20/4)/5)";
-	TokenQueue tq(s);
-	std::queue<ParseToken> oq = shunting_yard(tq);
-	ParseTree tt(oq);
-	int i = 0;
-	while (!oq.empty()) {
-		std::cout << oq.front().val << " ";
-		oq.pop();
+	for (int count = 0; count < 1000; count++) {
+		std::string s = "(((3*2)+(20/4)/5)+(17/2))/12";
+		TokenQueue tq(s);
+		std::queue<ParseToken> oq = shunting_yard(tq);
+		ParseTree tt(oq);
+		int i = 0;
+		/*while (!oq.empty()) {
+			std::cout << oq.front().val << " ";
+			oq.pop();
+		}*/
+		//std::cout << std::endl;
+		//std::cout << eval_tree(tt.root) << std::endl;
+		std::cout << eval_tree(tt.root) << std::endl;
 	}
-	std::cout << std::endl;
-	std::cout << eval_tree(tt.root) << std::endl;
 	return 0;
 }
